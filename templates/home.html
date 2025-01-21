@@ -3,55 +3,193 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ALX SE C22 Portfolio</title>
+    <title>Blog Home - My Website</title>
     <style>
+        /* Basic Reset */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
         body {
             font-family: 'Arial', sans-serif;
-            background-color: #f4f4f9;
-            margin: 0;
-            padding: 0;
+            background-color: #f4f6f9;
             display: flex;
             justify-content: center;
-            align-items: center;
-            height: 100vh;
-            text-align: center;
-        }
-        
-        h1 {
-            font-size: 3em;
-            color: #2c3e50;
-            margin-bottom: 20px;
-            text-transform: uppercase;
-            letter-spacing: 2px;
+            align-items: flex-start;
+            min-height: 100vh;
+            flex-direction: column;
         }
 
-        p {
-            font-size: 1.2em;
-            color: #7f8c8d;
-            margin: 0;
-            padding: 0;
-        }
-
-        .container {
-            background-color: #ffffff;
-            border-radius: 8px;
-            padding: 30px 40px;
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
-            max-width: 600px;
+        /* Navbar Style */
+        nav {
             width: 100%;
+            background-color: #2C3E50;
+            padding: 10px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: fixed;
+            top: 0;
+            left: 0;
+            z-index: 1000;
         }
 
-        .container p {
-            margin-top: 15px;
+        nav .logo {
+            color: white;
+            font-size: 24px;
+            font-weight: bold;
+            text-decoration: none;
         }
 
+        nav ul {
+            display: flex;
+            list-style: none;
+        }
+
+        nav ul li {
+            margin: 0 15px;
+        }
+
+        nav ul li a {
+            color: white;
+            text-decoration: none;
+            font-size: 16px;
+        }
+
+        nav ul li a:hover {
+            text-decoration: underline;
+        }
+
+        nav .search-box input[type="text"] {
+            padding: 5px;
+            border: none;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+
+        nav .search-box button {
+            padding: 5px 10px;
+            border: none;
+            background-color: #3498db;
+            color: white;
+            cursor: pointer;
+            border-radius: 5px;
+        }
+
+        nav .search-box button:hover {
+            background-color: #2980b9;
+        }
+
+        /* Blog Container */
+        .blog-container {
+            margin-top: 70px;
+            width: 100%;
+            max-width: 1000px;
+            background-color: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0px 4px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .blog-container h2 {
+            text-align: center;
+            margin-bottom: 30px;
+            color: #2C3E50;
+        }
+
+        .blog-post {
+            margin-bottom: 25px;
+            padding: 20px;
+            background-color: #ecf0f1;
+            border-radius: 8px;
+            box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.05);
+        }
+
+        .blog-post h3 {
+            color: #2C3E50;
+            margin-bottom: 15px;
+        }
+
+        .blog-post p {
+            color: #7f8c8d;
+            margin-bottom: 20px;
+        }
+
+        .read-more {
+            color: #3498db;
+            text-decoration: none;
+            font-size: 16px;
+        }
+
+        .read-more:hover {
+            text-decoration: underline;
+        }
+
+        .blog-footer {
+            text-align: center;
+            margin-top: 30px;
+            color: #7f8c8d;
+        }
+
+        .blog-footer a {
+            color: #3498db;
+            text-decoration: none;
+        }
+
+        .blog-footer a:hover {
+            text-decoration: underline;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            nav ul {
+                flex-direction: column;
+                align-items: center;
+            }
+
+            nav ul li {
+                margin: 10px 0;
+            }
+
+            .search-box {
+                flex-direction: column;
+                margin-left: 0;
+            }
+
+            .blog-container {
+                padding: 20px;
+            }
+        }
     </style>
 </head>
 <body>
 
-    <div class="container">
-        <h1>Hello ALX SE C22</h1>
-        <p>This is my SE portfolio project</p>
+    <!-- Navbar -->
+    <nav>
+        <a href="/" class="logo">MyBlog</a>
+        <ul>
+            <li><a href="/">Home</a></li>
+            <li><a href="blog">Blog</a></li>
+            <li><a href="/login">Login</a></li>
+            <li><a href="/regest">Sign Up</a></li>
+            <li><a href="admin.html">Admin</a></li>
+        </ul>
+        <div class="search-box">
+            <input type="text" placeholder="Search...">
+            <button>Search</button>
+        </div>
+    </nav>
+
+    <!-- Blog Container -->
+    <div class="blog-container">
+        <h2>Welcome to My Blog</h2>
+
+        <!-- Footer -->
+        <div class="blog-footer">
+            <p>Want to write your own blog? <a href="signup.html">Sign Up</a></p>
+        </div>
     </div>
 
 </body>

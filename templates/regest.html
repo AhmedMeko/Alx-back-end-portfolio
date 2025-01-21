@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sign Up - My Professional Website</title>
+    <style>
+        /* Basic Reset */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        /* Body and Font Style */
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #f4f6f9; /* Light gray background */
+            display: flex;
+            min-height: 100vh;
+            justify-content: center; /* Center align the form */
+            align-items: center;
+        }
+
+        /* Main Content Area */
+        .signup-container {
+            background-color: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0px 4px 15px rgba(0, 0, 0, 0.1); /* Subtle shadow */
+            width: 100%;
+            max-width: 400px; /* Max width for the form */
+            text-align: center;
+        }
+
+        .signup-container h2 {
+            color: #2C3E50; /* Dark blue color */
+            margin-bottom: 20px;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 12px;
+            margin-bottom: 20px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            font-size: 16px;
+            background-color: #ecf0f1; /* Light gray background for inputs */
+            transition: border-color 0.3s ease;
+        }
+
+        .form-input:focus {
+            border-color: #3498db; /* Blue border on focus */
+        }
+
+        .submit-btn {
+            width: 100%;
+            padding: 12px;
+            background-color: #3498db; /* Light blue background */
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        .submit-btn:hover {
+            background-color: #2980b9; /* Darker blue on hover */
+        }
+
+        .signup-footer {
+            margin-top: 20px;
+            font-size: 14px;
+            color: #7f8c8d; /* Light gray for footer text */
+        }
+
+        .signup-footer a {
+            color: #3498db; /* Light blue link */
+            text-decoration: none;
+        }
+
+        .signup-footer a:hover {
+            text-decoration: underline;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .signup-container {
+                padding: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Sign Up Container -->
+    <div class="signup-container">
+        <h2>Create Your Account</h2>
+        
+        <!-- Sign Up Form -->
+        <form action="#" method="POST">
+            <input type="text" name="first_name" placeholder="First Name" class="form-input" required>
+            <input type="text" name="last_name" placeholder="Last Name" class="form-input" required>
+            <input type="email" name="email" placeholder="Email" class="form-input" required>
+            <input type="password" name="password" placeholder="Password" class="form-input" required>
+            <input type="password" name="re_password" placeholder="Re-enter Password" class="form-input" required>
+            
+            <button type="submit" class="submit-btn">Sign Up</button>
+        </form>
+        
+        <!-- Footer with link to login page -->
+        <div class="signup-footer">
+            <p>Already have an account? <a href="/login">Login</a></p>
+        </div>
+    </div>
+
+</body>
+</html>
