@@ -1,8 +1,16 @@
-from flask import Flask, render_template
+from flask import Flask, render_template, flash
+from flask_wtf import FlaskForm
+from wtforms import StringField, SubmitField
+from wtforms.validators import DataRequired
 
 # Creating The base (Before we Start
 app = Flask(__name__)
+app.config["SECRET_KEY"] = 'welcom to my own world'
 
+# work with WTF
+class FormName(FlaskForm):
+    name = StringField('What is your name ?!', validators=[DataRequired()])
+    submit = SubmitField('Submit')
 # Creating The Frist Route and This is Home :)
 
 @app.route('/')
@@ -10,14 +18,27 @@ app = Flask(__name__)
 def index():
     return render_template('home.html')
 
+@app.route('/user/<name>')
+
+def user(name):
+    return render_template('user.html',user_name=name)
+
 # Login and sign UP
 @app.route('/login')
 def login():
     return render_template('login.html')
 @app.route('/regest')
 def regest():
-    return render_template('regest.html')
-
+    return render_template('regestr.html')
+@app.route('/name',methods=['GET', 'POST'])
+def name():
+    name = None
+    form = FormName()
+    if form.validate_on_submit():
+        name = form.name.data
+        form.name.data = ''
+        flash("Welcome to my Site")
+    return render_template('name.html', name = name, form = form)
 
 
 # Error handel page
