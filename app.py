@@ -6,7 +6,7 @@ import firebase_admin
 from firebase_admin import credentials, firestore
 
 # Fire base Config
-cred = credentials.Certificate("teamtracker-eb9ac-firebase-adminsdk-rv9fp-ee98649254.json")
+cred = credentials.Certificate("key.json")
 firebase_admin.initialize_app(cred)
 
 # إعداد قاعدة بيانات Firestore

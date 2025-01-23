@@ -169,4 +169,4 @@ cython_debug/
 
 # PyPI configuration file
 .pypirc
-./teamtracker-eb9ac-firebase-adminsdk-rv9fp-ee98649254.json
+key.json
