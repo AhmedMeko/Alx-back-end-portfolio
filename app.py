@@ -2,6 +2,16 @@ from flask import Flask, render_template, flash
 from flask_wtf import FlaskForm
 from wtforms import StringField, SubmitField
 from wtforms.validators import DataRequired
+import firebase_admin
+from firebase_admin import credentials, firestore
+
+# Fire base Config
+cred = credentials.Certificate("teamtracker-eb9ac-firebase-adminsdk-rv9fp-ee98649254.json")
+firebase_admin.initialize_app(cred)
+
+# إعداد قاعدة بيانات Firestore
+db = firestore.client()
+
 
 # Creating The base (Before we Start
 app = Flask(__name__)
@@ -30,15 +40,23 @@ def login():
 @app.route('/regest')
 def regest():
     return render_template('regestr.html')
-@app.route('/name',methods=['GET', 'POST'])
+@app.route('/name', methods=['GET', 'POST'])
 def name():
     name = None
     form = FormName()
     if form.validate_on_submit():
         name = form.name.data
         form.name.data = ''
-        flash("Welcome to my Site")
-    return render_template('name.html', name = name, form = form)
+        
+        # Store Data in databae
+        doc_ref = db.collection('users').document()
+        doc_ref.set({
+            'name': name
+        })
+        
+        flash("Welcome to my Site. Your name has been saved!")
+    return render_template('name.html', name=name, form=form)
+
 
 
 # Error handel page
