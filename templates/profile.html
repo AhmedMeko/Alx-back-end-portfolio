@@ -1,12 +1,36 @@
 {% extends "base.html" %}
-{% block content %}
-  <br/>
-  <br/>
-  <br/>
-    <div class="container mt-5">
-        <h1 class="text-center mb-4">Welcome to your Dashboard</h1>
-        <p class="text-center">You are logged in successfully!</p>
-    </div>
 
-  
+{% block content %}
+  <div class="container mt-5">
+    <h2>User Profile</h2>
+
+    {% if user %}
+      <div class="card">
+        <div class="card-body">
+          <h5 class="card-title">{{ user['first_name'] }} {{ user['last_name'] }}</h5>
+          <p class="card-text">Email: {{ user['email'] }}</p>
+          <p class="card-text">Member Since: {{ user['created_at'] }}</p>
+
+          <a href="{{ url_for('index') }}" class="btn btn-primary">Back to Home</a>
+        </div>
+      </div>
+
+      <h3>Blog Posts</h3>
+      {% if blog_posts %}
+        <ul class="list-group mt-3">
+          {% for post in blog_posts %}
+            <li class="list-group-item">
+              <h5>{{ post['title'] }}</h5>
+              <p>{{ post['content'] }}</p>
+            </li>
+          {% endfor %}
+        </ul>
+      {% else %}
+        <p>No blog posts found.</p>
+      {% endif %}
+
+    {% else %}
+      <p>No profile data found.</p>
+    {% endif %}
+  </div>
 {% endblock %}
