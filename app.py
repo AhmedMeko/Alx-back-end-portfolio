@@ -25,7 +25,19 @@ class BlogPostForm(FlaskForm):
     author = StringField('Author', validators=[DataRequired()])
     submit = SubmitField('Post')
 
-# Route to Create a Blog Post
+# Function to assign "admin" role to a user
+def set_user_to_admin(user_uid):
+    try:
+        auth.set_custom_user_claims(user_uid, {'role': 'admin'})
+        print(f"User {user_uid} has been set as admin.")
+    except Exception as e:
+        print(f"Error setting user {user_uid} as admin: {str(e)}")
+
+# Set a specific user as admin
+user_uid = '9RrhSqtMazZ7W9Ddmm8UA2rJ7Qx1'
+set_user_to_admin(user_uid)
+
+# Route to create a blog post
 @app.route('/create', methods=['GET', 'POST'])
 def create_post():
     form = BlogPostForm()
@@ -38,7 +50,7 @@ def create_post():
         slug = title.lower().replace(" ", "-")
         post_id = str(uuid.uuid4())
 
-        # Get the user data from Firestore to fetch the username
+        # Get user data from Firestore
         user_ref = db.collection('users').document(user_id)
         user_data = user_ref.get()
 
@@ -51,22 +63,20 @@ def create_post():
             'id': post_id,
             'title': title,
             'content': content,
-            'author': username,  # Store the username here
-            'user_id': user_id,  # Store the user ID to reference later
+            'author': username,
+            'user_id': user_id,
             'date_time': date_time.isoformat(),
             'slug': slug
         }
 
-        # Save the new blog post in Firestore
+        # Save the blog post in Firestore
         db.collection('blog_posts').document(post_id).set(blog_data)
         flash('Your post has been created successfully!', 'success')
         return redirect('/')
 
     return render_template('create.html', form=form)
 
-# Show Post
-
-# Home Page Route to Show All Blog Posts
+# Route to display the home page with all blog posts
 @app.route('/')
 def home():
     posts_ref = db.collection('blog_posts')
@@ -75,7 +85,7 @@ def home():
     blog_posts = [post.to_dict() for post in posts]
     return render_template('home.html', blog_posts=blog_posts)
 
-# Route to View a Single Post
+# Route to view a single post
 @app.route('/post/<slug>')
 def view_post(slug):
     post_ref = db.collection('blog_posts').where('slug', '==', slug).limit(1).stream()
@@ -86,7 +96,61 @@ def view_post(slug):
     else:
         flash('Post not found!', 'danger')
         return redirect('/')
-# User Login Route
+
+# Route to delete a blog post
+@app.route('/delete/<slug>', methods=['GET', 'POST'])
+def delete_post(slug):
+    post_ref = db.collection('blog_posts').where('slug', '==', slug).limit(1).stream()
+    post_data = next((post.to_dict() for post in post_ref), None)
+
+    if post_data:
+        # Check if the user is the author of the post
+        if post_data['user_id'] != session['user_id']:
+            flash('You are not authorized to delete this post.', 'danger')
+            return redirect('/')
+
+        # Delete the post from Firestore
+        db.collection('blog_posts').document(post_data['id']).delete()
+        flash('Post deleted successfully!', 'success')
+        return redirect('/')
+    else:
+        flash('Post not found!', 'danger')
+        return redirect('/')
+
+# Route to edit a blog post
+@app.route('/edit/<slug>', methods=['GET', 'POST'])
+def edit_post(slug):
+    post_ref = db.collection('blog_posts').where('slug', '==', slug).limit(1).stream()
+    post_data = next((post.to_dict() for post in post_ref), None)
+
+    if post_data:
+        # Check if the user is the author of the post
+        if post_data['user_id'] != session['user_id']:
+            flash('You are not authorized to edit this post.', 'danger')
+            return redirect('/')
+
+        form = EditPostForm()
+
+        if form.validate_on_submit():
+            # Update the post data
+            post_ref = db.collection('blog_posts').document(post_data['id'])
+            post_ref.update({
+                'title': form.title.data,
+                'content': form.content.data,
+                'date_time': datetime.datetime.now().isoformat(),
+            })
+            flash('Post updated successfully!', 'success')
+            return redirect(f'/post/{post_data["slug"]}')
+
+        form.title.data = post_data['title']
+        form.content.data = post_data['content']
+
+        return render_template('edit_post.html', form=form, post=post_data)
+    else:
+        flash('Post not found!', 'danger')
+        return redirect('/')
+
+# Route for user login
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
@@ -103,7 +167,7 @@ def login():
 
     return render_template('login.html')
 
-# User Signup with Role Assignment
+# Route for user signup with role assignment
 @app.route('/register', methods=['GET', 'POST'])
 def signup():
     if request.method == 'POST':
@@ -114,7 +178,7 @@ def signup():
 
         try:
             user = auth.create_user(email=email, password=password)
-            auth.set_custom_user_claims(user.uid, {'role': 'user'})  # or 'admin'
+            auth.set_custom_user_claims(user.uid, {'role': 'user'})  # Default role
 
             user_data = {
                 'first_name': first_name,
@@ -122,7 +186,7 @@ def signup():
                 'email': email,
                 'uid': user.uid,
                 'created_at': firestore.SERVER_TIMESTAMP,
-                'role': 'user',  # Default role
+                'role': 'user',
             }
             db.collection('users').document(user.uid).set(user_data)
             flash('User registered successfully!', 'success')
@@ -132,8 +196,16 @@ def signup():
 
     return render_template('sign_up.html')
 
-# User Profile Route
-@app.route('/profile')
+# Route for user logout
+@app.route('/logout')
+def logout():
+    session.pop('user_id', None)
+    session.pop('role', None)
+    flash('You have logged out successfully.', 'success')
+    return redirect('/')
+
+# Route for user profile
+@app.route('/profile', methods=['GET', 'POST'])
 def profile():
     if 'user_id' not in session:
         flash('You must be logged in to access the profile!', 'danger')
@@ -145,23 +217,71 @@ def profile():
 
     if user_data.exists:
         user_data = user_data.to_dict()
+
+        if request.method == 'POST':
+            first_name = request.form['first_name']
+            last_name = request.form['last_name']
+            email = request.form['email']
+            password = request.form['password']
+            
+            # Update the user data in Firestore
+            user_ref.update({
+                'first_name': first_name,
+                'last_name': last_name,
+                'email': email
+            })
+
+            # If password is provided, update it in Firebase Authentication
+            if password:
+                try:
+                    auth.update_user(user_id, password=password)
+                    flash('Password updated successfully!', 'success')
+                except Exception as e:
+                    flash(f'Error updating password: {str(e)}', 'danger')
+
+            flash('Profile updated successfully!', 'success')
+            return redirect('/profile')
+
         return render_template('profile.html', user=user_data)
     else:
         flash('User data not found!', 'danger')
         return redirect('/')
-
-# Admin Route to Manage Users (accessible only by admin)
+# Route for admin to manage users
 @app.route('/admin')
 def accounts():
     if 'role' not in session or session['role'] != 'admin':
         flash('You do not have permission to access this page!', 'danger')
-        return redirect('/')
+        return redirect('/')  # توجيه المستخدم إلى الصفحة الرئيسية إذا لم يكن لديه صلاحيات
 
     users_ref = db.collection('users')
     users = [user.to_dict() for user in users_ref.stream()]
     return render_template('admin.html', users=users)
 
-# Error Handlers for Different HTTP Errors
+# Route to edit user details
+@app.route('/edit_user/<uid>', methods=['GET', 'POST'])
+def edit_user(uid):
+    user_ref = db.collection('users').document(uid)
+    user_data = user_ref.get().to_dict()
+
+    if request.method == 'POST':
+        name = request.form['name']
+        email = request.form['email']
+        age = request.form['age']
+        phone = request.form['phone']
+
+        user_ref.update({
+            'name': name,
+            'email': email,
+            'age': age,
+            'phone': phone
+        })
+
+        flash('User updated successfully!', 'success')
+        return redirect('/admin')
+
+    return render_template('edit_user.html', user=user_data)
+
+# Error Handlers
 @app.errorhandler(404)
 def not_found_404(e):
     return render_template('404.html'), 404
@@ -170,6 +290,6 @@ def not_found_404(e):
 def not_found_500(e):
     return render_template('500.html'), 500
 
-# Run the Flask Application
+# Run the Flask application
 if __name__ == '__main__':
     app.run(debug=True)
