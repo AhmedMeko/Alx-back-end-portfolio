@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% block content %}
+<br>
+<br>
+<br>
+<br>
+
+<h1>Creaatin New Post </h1>
+<form method="POST">
+    {{ form.hidden_tag() }}
+    <div class="mb-3">
+        <label for="title" class="form-label">Title</label>
+        {{ form.title(class="form-control") }}
+    </div>
+    <div class="mb-3">
+        <label for="author" class="form-label">Author</label>
+        {{ form.author(class="form-control") }}
+    </div>
+
+    <div class="mb-3">
+        <label for="content" class="form-label">Content</label>
+        {{ form.content(class="form-control") }}
+    </div>
+    <button type="submit" class="btn btn-primary">Create Post</button>
+</form>{% endblock %}

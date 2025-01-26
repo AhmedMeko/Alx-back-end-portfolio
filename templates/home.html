@@ -1,5 +1,30 @@
 {% extends "base.html" %}
 {% block content %}
-    <h1>Hello</h1>
-    <p>hello This is me</p>
+<div class="container mt-5">
+    <h1 class="text-center mb-4">Blog Posts</h1>
+    <div class="text-end mb-4">
+        <a href="{{ url_for('create_post') }}" class="btn btn-primary">Create New Post</a>
+    </div>
+    {% if blog_posts %}
+        <div class="row row-cols-1 row-cols-md-2 g-4">
+            {% for post in blog_posts %}
+                <div class="col">
+                    <div class="card h-100">
+                        <div class="card-body">
+                            <h5 class="card-title">
+                                <a href="{{ url_for('view_post', slug=post['slug']) }}" class="text-decoration-none">{{ post['title'] }}</a>
+                            </h5>
+                            <p class="card-text">{{ post['content'][:100] }}...</p>
+                        </div>
+                        <div class="card-footer">
+                            <small class="text-muted">Created on: {{ post['date_time'] }}</small>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <p class="text-center text-muted">No blog posts available. Be the first to create one!</p>
+    {% endif %}
+</div>
 {% endblock %}
