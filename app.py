@@ -4,39 +4,58 @@ import os
 import firebase_admin
 from firebase_admin import credentials, firestore, auth
 import datetime
-import uuid
 
+
+
+# Initialize the Flask app and configure settings
 app = Flask(__name__)
 app.config["SECRET_KEY"] = "welcome_to_my_world"
 app.config["UPLOAD_FOLDER"] = "static/uploads/"
 app.config["ALLOWED_EXTENSIONS"] = {"png", "jpg", "jpeg", "gif"}
 
+# Ensure upload folder exists
 if not os.path.exists(app.config["UPLOAD_FOLDER"]):
     os.makedirs(app.config["UPLOAD_FOLDER"])
 
+# Initialize Firebase app with credentials
 cred = credentials.Certificate("key.json")
 firebase_admin.initialize_app(cred)
 db = firestore.client()
 
+# Helper function to check allowed file extensions
+def allowed_file(filename):
+    return "." in filename and filename.rsplit(".", 1)[1].lower() in app.config["ALLOWED_EXTENSIONS"]
+
+# Helper function to make user an admin
 def make_user_admin(user_id):
     user_ref = db.collection("users").document(user_id)
     user_ref.update({
         "is_admin": True
     })
     print(f"User {user_id} has been made an admin.")
-    
+
+# Example: make a specific user an admin
 make_user_admin("9RrhSqtMazZ7W9Ddmm8UA2rJ7Qx1")
 
-def allowed_file(filename):
-    return "." in filename and filename.rsplit(".", 1)[1].lower() in app.config["ALLOWED_EXTENSIONS"]
-
+# Route for home page
 @app.route("/")
 def home():
+    user_id = session.get("user_id")
+    current_user = None
+    if user_id:
+        # Get user details from Firestore
+        user_ref = db.collection("users").document(user_id)
+        current_user = user_ref.get().to_dict()
+
+    # Fetch all blog posts from Firestore, ordered by date
     posts_ref = db.collection("blog_posts")
     posts = posts_ref.order_by("date_time", direction=firestore.Query.DESCENDING).stream()
     blog_posts = [post.to_dict() for post in posts]
-    return render_template("home.html", blog_posts=blog_posts)
+    
+    # Render the homepage template and pass blog posts and current user info
+    return render_template("home.html", blog_posts=blog_posts, current_user=current_user)
 
+# Route for viewing a specific blog post
 @app.route("/post/<id>")
 def view_post(id):
     post_ref = db.collection("blog_posts").document(id)
@@ -46,86 +65,72 @@ def view_post(id):
     else:
         flash("Post not found.", "danger")
         return redirect(url_for("home"))
-
+# Route for creating a new blog post
 @app.route("/create", methods=["GET", "POST"])
-@app.route("/edit/<id>", methods=["GET", "POST"])
-def create_or_edit_post(id=None):
+def create_post():
     user_id = session.get("user_id")
+    
     if not user_id:
-        flash("Please log in to create or edit a post.", "danger")
+        flash("You must be logged in to create a post.", "danger")
         return redirect(url_for("login"))
 
     user_ref = db.collection("users").document(user_id)
     user = user_ref.get().to_dict()
-
-    is_admin = user.get("is_admin", False)
-
-    if id:
-        post_ref = db.collection("blog_posts").document(id)
-        post = post_ref.get()
-        if post.exists:
-            post_data = post.to_dict()
-            if post_data["user_id"] != user_id and not is_admin:
-                flash("You do not have permission to edit this post.", "danger")
-                return redirect(url_for("home"))
-        else:
-            flash("Post not found.", "danger")
-            return redirect(url_for("home"))
-    else:
-        post_data = None
-
+    
+    if not user:
+        flash("User not found.", "danger")
+        return redirect(url_for("login"))
+    
     if request.method == "POST":
-        title = request.form["title"]
-        content = request.form["content"]
+        title = request.form.get("title")
+        content = request.form.get("content")
         image_url = None
-
+        
+        if not title or not content:
+            flash("Title and Content are required.", "danger")
+            return redirect(url_for("create_post"))
+        
+        # Save the image if provided
         if "image" in request.files:
             file = request.files["image"]
             if file and allowed_file(file.filename):
                 filename = secure_filename(file.filename)
                 file.save(os.path.join(app.config["UPLOAD_FOLDER"], filename))
                 image_url = url_for("static", filename=f"uploads/{filename}")
-            else:
-                flash("Invalid image format. Supported formats are png, jpg, jpeg, gif.", "danger")
-                return redirect(request.url)
-
-        if not title or not content:
-            flash("Title and content are required.", "danger")
-            return redirect(request.url)
-
-        post_id = str(uuid.uuid4()) if not id else id
+        
+        # Prepare post data
         post_data = {
-            "id": post_id,
             "title": title,
             "content": content,
             "image_url": image_url,
             "date_time": datetime.datetime.now().isoformat(),
             "user_id": user_id,
-            "user_name": user["first_name"] + " " + user["last_name"]
+            "user_name": f"{user['first_name']} {user['last_name']}"
         }
-
-        if id:
-            post_ref.update(post_data)
-            flash("Post updated successfully!", "success")
-        else:
-            db.collection("blog_posts").document(post_id).set(post_data)
-            flash("Post created successfully!", "success")
-
+        
+        # Add post to Firestore
+        db.collection("blog_posts").add(post_data)
+        flash("Post created successfully!", "success")
+        
         return redirect(url_for("home"))
+    
+    return render_template("create_post.html")
 
-    return render_template("create_or_edit_post.html", post=post_data)
-
+# Route for deleting a specific blog post
 @app.route("/delete/<id>", methods=["POST"])
 def delete_post(id):
     post_ref = db.collection("blog_posts").document(id)
     post = post_ref.get()
+    
     if post.exists:
+        # Delete the post if it exists
         post_ref.delete()
         flash("Post deleted successfully!", "success")
     else:
         flash("Post not found.", "danger")
     return redirect(url_for("home"))
 
+# Route for login page
 @app.route("/login", methods=["GET", "POST"])
 def login():
     if request.method == "POST":
@@ -140,12 +145,14 @@ def login():
             flash("Login failed. Please check your credentials.", "danger")
     return render_template("login.html")
 
+# Route for logging out
 @app.route("/logout")
 def logout():
     session.pop("user_id", None)
     flash("Logged out successfully.", "success")
     return redirect(url_for("home"))
 
+# Route for user registration
 @app.route("/register", methods=["GET", "POST"])
 def register():
     if request.method == "POST":
@@ -168,6 +175,7 @@ def register():
             flash("Registration failed. Please try again.", "danger")
     return render_template("sign_up.html")
 
+# Route for admin dashboard
 @app.route("/admin")
 def admin():
     user_id = session.get("user_id")
@@ -188,6 +196,7 @@ def admin():
 
     return render_template("admin.html", users=users_data)
 
+# Route for adding a new user (admin access only)
 @app.route("/add_user", methods=["POST"])
 def add_user():
     user_id = session.get("user_id")
@@ -207,6 +216,7 @@ def add_user():
     password = request.form["password"]
 
     try:
+        # Create new user
         new_user = auth.create_user(email=email, password=password)
         user_data = {
             "name": name,
@@ -222,39 +232,7 @@ def add_user():
 
     return redirect(url_for("admin"))
 
-@app.route("/edit_user/<uid>", methods=["GET", "POST"])
-def edit_user(uid):
-    user_id = session.get("user_id")
-    if not user_id:
-        flash("Please log in to edit a user.", "danger")
-        return redirect(url_for("login"))
-    
-    user_ref = db.collection("users").document(user_id)
-    user = user_ref.get().to_dict()
-
-    if not user or not user.get("is_admin", False):
-        flash("You do not have permission to edit users.", "danger")
-        return redirect(url_for("home"))
-    
-    user_ref = db.collection("users").document(uid)
-    user_to_edit = user_ref.get().to_dict()
-
-    if request.method == "POST":
-        name = request.form["name"]
-        email = request.form["email"]
-        
-        updated_data = {
-            "name": name,
-            "email": email,
-            "uid": uid
-        }
-
-        user_ref.update(updated_data)
-        flash("User updated successfully!", "success")
-        return redirect(url_for("admin"))
-
-    return render_template("edit_user.html", user=user_to_edit)
-
+# Route for user profile page
 @app.route("/profile", methods=["GET", "POST"])
 def profile():
     user_id = session.get("user_id")
@@ -266,7 +244,7 @@ def profile():
     user = user_ref.get().to_dict()
 
     if request.method == "POST":
-        # استلام البيانات من النموذج
+        # Handling profile update form submission
         first_name = request.form["first_name"]
         last_name = request.form["last_name"]
         password = request.form["password"]
@@ -275,11 +253,11 @@ def profile():
         updated_data = {
             "first_name": first_name,
             "last_name": last_name,
-            "password": password,  # هنا يتم تحديث كلمة المرور
+            "password": password,  # Updating password
             "age": age,
         }
 
-        # إضافة صورة البروفايل إذا تم تحميلها
+        # Save profile picture if uploaded
         if "profile_picture" in request.files:
             file = request.files["profile_picture"]
             if file:
@@ -288,10 +266,10 @@ def profile():
                 profile_picture_url = url_for("static", filename=f"uploads/{filename}")
                 updated_data["profile_picture"] = profile_picture_url
 
-        # تحديث البيانات في Firestore
+        # Update user data in Firestore
         user_ref.update(updated_data)
         
-        # تحديث كلمة المرور في Firebase
+        # Update password in Firebase
         if password:
             try:
                 user = auth.update_user(user_id, password=password)
@@ -305,5 +283,6 @@ def profile():
     return render_template("profile.html", user=user)
 
 
+# Run the Flask app
 if __name__ == "__main__":
     app.run(debug=True)

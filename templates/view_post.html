@@ -3,8 +3,20 @@
 {% block title %}{{ post.title }} - Geek Maa{% endblock %}
 
 {% block content %}
+  <!-- Display the post title -->
   <h1>{{ post.title }}</h1>
-  <p><strong>By {{ post.user_name }} on {{ post.date_time }}</strong></p>
+  
+  <!-- Display the post's author and formatted date -->
+  <p><strong>By {{ post.user_name }} on {{ post.date_time.strftime('%B %d, %Y') }}</strong></p>
+  
+  <!-- Display the post content -->
   <p>{{ post.content }}</p>
+  
+  <!-- Check if the post has an image and display it -->
+  {% if post.image_url %}
+    <img src="{{ post.image_url }}" alt="Post Image" class="img-fluid">
+  {% endif %}
+  
+  <!-- Button to go back to the home page -->
   <a href="{{ url_for('home') }}" class="btn btn-secondary">Back to Home</a>
 {% endblock %}

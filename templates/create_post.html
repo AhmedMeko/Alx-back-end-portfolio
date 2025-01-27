@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+
+{% block title %}Create Post - Geek Maa{% endblock %}
+
+{% block content %}
+  <div class="container mt-5">
+    <h2>Create New Post</h2>
+
+    <form method="POST" enctype="multipart/form-data">
+      <!-- Title input -->
+      <div class="form-group">
+        <label for="title">Post Title</label>
+        <input type="text" class="form-control" id="title" name="title" placeholder="Enter post title" required>
+      </div>
+
+      <!-- Content input -->
+      <div class="form-group">
+        <label for="content">Content</label>
+        <textarea class="form-control" id="content" name="content" rows="5" placeholder="Enter post content" required></textarea>
+      </div>
+
+      <!-- Image input -->
+      <div class="form-group">
+        <label for="image">Post Image</label>
+        <input type="file" class="form-control-file" id="image" name="image">
+      </div>
+
+      <!-- Submit Button -->
+      <button type="submit" class="btn btn-primary">Create Post</button>
+    </form>
+  </div>
+{% endblock %}
