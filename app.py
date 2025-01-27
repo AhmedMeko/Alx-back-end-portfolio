@@ -5,17 +5,14 @@ import firebase_admin
 from firebase_admin import credentials, firestore, auth
 import datetime
 
-# Initialize the Flask app
 app = Flask(__name__)
 app.config["SECRET_KEY"] = "welcome_to_my_world"
 app.config["UPLOAD_FOLDER"] = "static/uploads/"
 app.config["ALLOWED_EXTENSIONS"] = {"png", "jpg", "jpeg", "gif"}
 
-# Ensure upload folder exists
 if not os.path.exists(app.config["UPLOAD_FOLDER"]):
     os.makedirs(app.config["UPLOAD_FOLDER"])
 
-# Initialize Firebase
 try:
     cred = credentials.Certificate("key.json")
     firebase_admin.initialize_app(cred)
@@ -23,20 +20,22 @@ try:
     print("Firestore initialized successfully!")
 except Exception as e:
     print("Error initializing Firestore:", e)
-# Helper function to check allowed file extensions
+
+
 def allowed_file(filename):
     return "." in filename and filename.rsplit(".", 1)[1].lower() in app.config["ALLOWED_EXTENSIONS"]
 
-# Helper function to make user an admin
+
 def make_user_admin(user_id):
     user_ref = db.collection("users").document(user_id)
-    user_ref.update({
-        "is_admin": True
-    })
-    print(f"User {user_id} has been made an admin.")
+    user_doc = user_ref.get()
 
-# Example: make a specific user an admin
-make_user_admin("RKXsBcjMMla1itb56blcqvqjCr12")
+    if user_doc.exists:
+        user_ref.update({"is_admin": True})
+        print(f"User {user_id} has been updated to admin.")
+    else:
+        user_ref.set({"is_admin": True})
+        print(f"User {user_id} has been created as admin.")
 
 # Route for home page
 @app.route("/")
@@ -44,16 +43,19 @@ def home():
     user_id = session.get("user_id")
     current_user = None
     if user_id:
-        # Get user details from Firestore
         user_ref = db.collection("users").document(user_id)
         current_user = user_ref.get().to_dict()
 
-    # Fetch all blog posts from Firestore, ordered by date
     posts_ref = db.collection("blog_posts")
     posts = posts_ref.order_by("date_time", direction=firestore.Query.DESCENDING).stream()
-    blog_posts = [post.to_dict() for post in posts]
     
-    # Render the homepage template and pass blog posts and current user info
+    # تحويل المستندات إلى قائمة مع إضافة معرف المستند
+    blog_posts = []
+    for post in posts:
+        post_data = post.to_dict()
+        post_data['id'] = post.id  # إضافة معرف المستند إلى البيانات
+        blog_posts.append(post_data)
+    
     return render_template("home.html", blog_posts=blog_posts, current_user=current_user)
 
 # Route for viewing a specific blog post
@@ -62,10 +64,11 @@ def view_post(id):
     post_ref = db.collection("blog_posts").document(id)
     post = post_ref.get()
     if post.exists:
-        return render_template("edit_post.html", post=post.to_dict())
+        return render_template("view_post.html", post=post.to_dict(), post_id=id)
     else:
         flash("Post not found.", "danger")
         return redirect(url_for("home"))
+
 # Route for creating a new blog post
 @app.route("/create", methods=["GET", "POST"])
 def create_post():
