@@ -1,58 +1,55 @@
 {% extends "base.html" %}
 
+{% block title %}Profile - Geek Maa{% endblock %}
+
 {% block content %}
-  <div class="container mt-5">
-    <h2>User Profile</h2>
-
-    {% if user %}
-      <div class="card">
-        <div class="card-body">
-          <h5 class="card-title">{{ user['first_name'] }} {{ user['last_name'] }}</h5>
-          <p class="card-text">Email: {{ user['email'] }}</p>
-          <p class="card-text">Member Since: {{ user['created_at'] }}</p>
-
-          <!-- Form to edit user profile -->
-          <h3>Edit Profile</h3>
-          <form method="POST">
-            <div class="form-group">
-              <label for="first_name">First Name</label>
-              <input type="text" class="form-control" id="first_name" name="first_name" value="{{ user['first_name'] }}" required>
-            </div>
-            <div class="form-group">
-              <label for="last_name">Last Name</label>
-              <input type="text" class="form-control" id="last_name" name="last_name" value="{{ user['last_name'] }}" required>
-            </div>
-            <div class="form-group">
-              <label for="email">Email</label>
-              <input type="email" class="form-control" id="email" name="email" value="{{ user['email'] }}" required>
-            </div>
-            <div class="form-group">
-              <label for="password">Password</label>
-              <input type="password" class="form-control" id="password" name="password" placeholder="Enter new password (optional)">
-            </div>
-            <button type="submit" class="btn btn-primary mt-3">Update Profile</button>
-          </form>
-
-          <a href="{{ url_for('home') }}" class="btn btn-secondary mt-3">Back to Home</a>
-        </div>
+<div class="container mt-5">
+  <div class="row">
+    <!-- صورة البروفايل على اليمين -->
+    <div class="col-md-4 text-center">
+      <div class="profile-picture">
+        {% if user.profile_picture %}
+          <img src="{{ user.profile_picture }}" alt="Profile Picture" class="img-fluid rounded-circle" width="200">
+        {% else %}
+          <img src="{{ url_for('static', filename='default-avatar.png') }}" alt="Default Profile Picture" class="img-fluid rounded-circle" width="200">
+        {% endif %}
       </div>
+    </div>
 
-      <h3>Blog Posts</h3>
-      {% if blog_posts %}
-        <ul class="list-group mt-3">
-          {% for post in blog_posts %}
-            <li class="list-group-item">
-              <h5>{{ post['title'] }}</h5>
-              <p>{{ post['content'] }}</p>
-            </li>
-          {% endfor %}
-        </ul>
-      {% else %}
-        <p>No blog posts found.</p>
-      {% endif %}
-
-    {% else %}
-      <p>No profile data found.</p>
-    {% endif %}
+    <!-- نموذج تعديل البيانات -->
+    <div class="col-md-8">
+      <div class="profile-info p-4 bg-light rounded shadow-sm">
+        <h2 class="text-center mb-4">Edit Profile</h2>
+        <form method="POST" enctype="multipart/form-data">
+          <div class="form-group">
+            <label for="first_name">First Name</label>
+            <input type="text" class="form-control" id="first_name" name="first_name" value="{{ user.first_name }}" required>
+          </div>
+          <div class="form-group">
+            <label for="last_name">Last Name</label>
+            <input type="text" class="form-control" id="last_name" name="last_name" value="{{ user.last_name }}" required>
+          </div>
+          <div class="form-group">
+            <label for="email">Email</label>
+            <input type="email" class="form-control" id="email" name="email" value="{{ user.email }}" disabled>
+          </div>
+          <div class="form-group">
+            <label for="password">Password</label>
+            <input type="password" class="form-control" id="password" name="password">
+          </div>
+          <div class="form-group">
+            <label for="age">Age</label>
+            <input type="number" class="form-control" id="age" name="age" value="{{ user.age }}" required>
+          </div>
+          <div class="form-group">
+            <label for="profile_picture">Profile Picture</label>
+            <input type="file" class="form-control-file" id="profile_picture" name="profile_picture">
+          </div>
+          <button type="submit" class="btn btn-primary btn-block">Save Changes</button>
+        </form>
+      </div>
+    </div>
   </div>
+</div>
+
 {% endblock %}

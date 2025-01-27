@@ -1,10 +1,10 @@
 {% extends "base.html" %}
 
-{% block title %}Sign Up - Geek Maa{% endblock %}
+{% block title %}Add User - Admin{% endblock %}
 
 {% block content %}
-  <h2 class="text-center">Sign Up</h2>
-  <form action="{{ url_for('register') }}" method="POST">
+  <h2>Add New User</h2>
+  <form action="{{ url_for('add_user') }}" method="POST">
     <div class="mb-3">
       <label for="first_name" class="form-label">First Name</label>
       <input type="text" class="form-control" id="first_name" name="first_name" required>
@@ -21,6 +21,6 @@
       <label for="password" class="form-label">Password</label>
       <input type="password" class="form-control" id="password" name="password" required>
     </div>
-    <button type="submit" class="btn btn-primary">Sign Up</button>
+    <button type="submit" class="btn btn-primary">Add User</button>
   </form>
 {% endblock %}

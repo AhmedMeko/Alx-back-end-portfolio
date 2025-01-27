@@ -11,12 +11,10 @@
         </li>
         
         {% if session.get('user_id') %}
-          <!-- Show 'Create Post' only if the user is logged in -->
           <li class="nav-item">
             <a class="nav-link" href="/create">Create Post</a>
           </li>
         {% else %}
-          <!-- Show login and sign up links if the user is not logged in -->
           <li class="nav-item">
             <a class="nav-link" href="/login">Login</a>
           </li>
@@ -26,7 +24,6 @@
         {% endif %}
 
         {% if session.get('user_id') %}
-          <!-- If logged in, show profile and admin options -->
           <li class="nav-item">
             <a class="nav-link" href="/profile">Profile</a>
           </li>
