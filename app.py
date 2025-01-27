@@ -5,9 +5,7 @@ import firebase_admin
 from firebase_admin import credentials, firestore, auth
 import datetime
 
-
-
-# Initialize the Flask app and configure settings
+# Initialize the Flask app
 app = Flask(__name__)
 app.config["SECRET_KEY"] = "welcome_to_my_world"
 app.config["UPLOAD_FOLDER"] = "static/uploads/"
@@ -17,11 +15,14 @@ app.config["ALLOWED_EXTENSIONS"] = {"png", "jpg", "jpeg", "gif"}
 if not os.path.exists(app.config["UPLOAD_FOLDER"]):
     os.makedirs(app.config["UPLOAD_FOLDER"])
 
-# Initialize Firebase app with credentials
-cred = credentials.Certificate("key.json")
-firebase_admin.initialize_app(cred)
-db = firestore.client()
-
+# Initialize Firebase
+try:
+    cred = credentials.Certificate("key.json")
+    firebase_admin.initialize_app(cred)
+    db = firestore.client()
+    print("Firestore initialized successfully!")
+except Exception as e:
+    print("Error initializing Firestore:", e)
 # Helper function to check allowed file extensions
 def allowed_file(filename):
     return "." in filename and filename.rsplit(".", 1)[1].lower() in app.config["ALLOWED_EXTENSIONS"]
@@ -35,7 +36,7 @@ def make_user_admin(user_id):
     print(f"User {user_id} has been made an admin.")
 
 # Example: make a specific user an admin
-make_user_admin("9RrhSqtMazZ7W9Ddmm8UA2rJ7Qx1")
+make_user_admin("RKXsBcjMMla1itb56blcqvqjCr12")
 
 # Route for home page
 @app.route("/")
@@ -61,7 +62,7 @@ def view_post(id):
     post_ref = db.collection("blog_posts").document(id)
     post = post_ref.get()
     if post.exists:
-        return render_template("view_post.html", post=post.to_dict())
+        return render_template("edit_post.html", post=post.to_dict())
     else:
         flash("Post not found.", "danger")
         return redirect(url_for("home"))
@@ -182,9 +183,10 @@ def admin():
     if not user_id:
         flash("Please log in to access the admin page.", "danger")
         return redirect(url_for("login"))
-    
+
     user_ref = db.collection("users").document(user_id)
     user = user_ref.get().to_dict()
+    print("Current User:", user)  # Debugging
 
     if not user or not user.get("is_admin", False):
         flash("You do not have permission to access this page.", "danger")
@@ -193,6 +195,7 @@ def admin():
     users_ref = db.collection("users")
     users = users_ref.stream()
     users_data = [user.to_dict() for user in users]
+    print("Users Data:", users_data)  # Debugging
 
     return render_template("admin.html", users=users_data)
 
